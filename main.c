@@ -21,8 +21,6 @@
 #define NB_TYPES 4
 #define NB_TRANS_STATES 16
 
-#define NB_DIFF_CHARS 28
-
 //******************************************************************************************/
 
 double generate_random_number()
