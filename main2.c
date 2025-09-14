@@ -31,6 +31,8 @@ Character_ initialise_character_()
 
     c.distribution_ = malloc(sizeof(Character_Data) * NB_CHARACTERS);
 
+    c.count = 0;
+
     return c;
 }
 
@@ -46,6 +48,17 @@ typedef struct
 }
 Characters_Distribution_;
 
+Characters_Distribution_ initialise_Characters_Distribution_()
+{
+    Characters_Distribution_ data = { 0 };
+
+    data.characters = malloc(sizeof(Character_) * NB_CHARACTERS);
+
+    data.count = 0;
+
+    return data;
+}
+
 void free_Characters_Distribution_(Characters_Distribution_ *d)
 {
     for ( int i = 0; i < d->count; i++ )
@@ -56,20 +69,11 @@ void free_Characters_Distribution_(Characters_Distribution_ *d)
     free( d->characters);
 }
 
-Characters_Distribution_ initialise_Characters_Distribution_()
-{
-    Characters_Distribution_ data = { 0 };
-
-    data.characters = malloc(sizeof(Character_) * NB_CHARACTERS);
-
-    return data;
-}
-
 char* initialise_previous_()
 {
-    char *previous_ = malloc(sizeof(char) * NB_CHARACTERS);
+    char *previous_ = malloc(sizeof(char) * PREVIOUS_CHECKED);
 
-    for ( int i = 0; i < NB_CHARACTERS; i++)
+    for ( int i = 0; i < PREVIOUS_CHECKED; i++)
     {
         previous_[i] = -1;
     }
@@ -136,7 +140,7 @@ Characters_Distribution_ extract_data_from_file(FILE *fp)
                     {
                         Character_Data new_data = { 0 }; // create a new entry
 
-                        new_data.label = c;////creation of a new entry
+                        new_data.label = c_in_review;////creation of a new entry
 
                         new_data.count++;//creation of a new entry
 
@@ -225,27 +229,27 @@ char* generate_random_text_(Characters_Distribution_ *data, int size)
 
     Character_score *scores_ = malloc(sizeof(Character_score) * data->count);
 
-    for (int i = 0; i < data->count; i++)
-    {
-        Character_ *character = &data->characters[i];//selecter a character
-
-        Character_score score = { 0 };//score each character
-
-        scores_[i] = score;
-
-        for ( int l = 0; l < PREVIOUS_CHECKED; l++ )//pass through previous characters
-        {
-            for ( int j = 0; i < character->count; j++ )//pass through the distribution of previous character of the current character
-            {
-                Character_Data *data = &character->distribution_[j];
-
-                if ( data->label == previous_[l] ) score.count += data->count;
-            }
-        }
-    }
-
     for ( int n = 0; n < size; n++)
     {
+        for (int i = 0; i < data->count; i++)//pass through all the caracter of the distribution
+        {
+            Character_ *character = &data->characters[i];//select a character
+
+            Character_score score = { 0 };//score each character
+
+            for ( int l = 0; l < PREVIOUS_CHECKED; l++ )//pass through previous characters
+            {
+                for ( int j = 0; j < character->count; j++ )//pass through the distribution of previous character of the current character
+                {
+                    Character_Data *data = &character->distribution_[j];
+
+                    if ( data->label == previous_[l] ) score.count += data->count;
+                }
+            }
+
+            scores_[i] = score;
+        }
+
         //select the next letter based on the score obtained
         int current_max = 0;
 
@@ -253,9 +257,12 @@ char* generate_random_text_(Characters_Distribution_ *data, int size)
 
         for ( int k = 0; k < data->count; k++ )
         {
-            if ( scores_[k].count > current_max ) current_max = scores_[k].count;
+            if ( scores_[k].count > current_max )
+            {
+                current_max = scores_[k].count;
 
-            win_index = k;
+                win_index = k;
+            } 
         }
 
         char next_letter = data->characters[win_index].label;
@@ -266,6 +273,8 @@ char* generate_random_text_(Characters_Distribution_ *data, int size)
 
         add_character_to_previous(previous_, &previous_ptr, next_letter);
     }
+
+    result_[reader_ptr] = '\0';
 
     free(previous_);
     free(scores_);
