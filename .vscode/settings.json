@@ -1,0 +1,28 @@
+{
+    "files.associations": {
+        "__bit_reference": "c",
+        "bitset": "c",
+        "chrono": "c",
+        "unordered_map": "c",
+        "algorithm": "c",
+        "format": "c",
+        "random": "c",
+        "save": "c",
+        "save2": "c",
+        "__locale": "c",
+        "functional": "c",
+        "__hash_table": "c",
+        "__tuple": "c",
+        "array": "c",
+        "charconv": "c",
+        "compare": "c",
+        "cstddef": "c",
+        "type_traits": "c",
+        "limits": "c",
+        "ratio": "c",
+        "tuple": "c",
+        "variant": "c",
+        "complex": "c",
+        "utility": "c"
+    }
+}
