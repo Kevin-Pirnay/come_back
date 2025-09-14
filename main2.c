@@ -30,6 +30,8 @@ Character_ initialise_character_()
     Character_ c = { 0 };
 
     c.distribution_ = malloc(sizeof(Character_Data) * NB_CHARACTERS);
+
+    return c;
 }
 
 void free_Character(Character_ c)
@@ -59,6 +61,8 @@ Characters_Distribution_ initialise_Characters_Distribution_()
     Characters_Distribution_ data = { 0 };
 
     data.characters = malloc(sizeof(Character_) * NB_CHARACTERS);
+
+    return data;
 }
 
 char* initialise_previous_()
@@ -106,7 +110,7 @@ Characters_Distribution_ extract_data_from_file(FILE *fp)
             {
                 label_found_in_characters_distribution = 1;//set bool to one
 
-                Character_ character = dist_.characters[i];//select the existing character
+                Character_ *character = &dist_.characters[i];//select the existing character
 
                 for (int l = 0; l < PREVIOUS_CHECKED; l++)//pass in review the previous characters
                 {
@@ -114,15 +118,15 @@ Characters_Distribution_ extract_data_from_file(FILE *fp)
 
                     if ( c_in_review == -1 ) continue; //if the entry is not yet initialised, continue -> it will append at the very begnning of the text
 
-                    for ( int j = 0; j < character.count; j++)//pass through the existing entry of character
+                    for ( int j = 0; j < character->count; j++)//pass through the existing entry of character
                     {
-                        if ( character.distribution_[j].label == c_in_review )//if the entry already exist for the character
+                        if ( character->distribution_[j].label == c_in_review )//if the entry already exist for the character
                         {
                             label_found_in_character_distribution = 1;//set bool to one
 
-                            Character_Data data = character.distribution_[j];//select the existing entry
+                            Character_Data *data = &character->distribution_[j];//select the existing entry
 
-                            data.count++;//incrementing count of an existing entry
+                            data->count++;//incrementing count of an existing entry
                         }
                     }
 
@@ -136,9 +140,9 @@ Characters_Distribution_ extract_data_from_file(FILE *fp)
 
                         new_data.count++;//creation of a new entry
 
-                        character.distribution_[character.count] = new_data;//adding a new entry at the last index
+                        character->distribution_[character->count] = new_data;//adding a new entry at the last index
 
-                        character.count++;//incrementing number of entries to pass through for a the character 
+                        character->count++;//incrementing number of entries to pass through for a the character 
                     }
                 }
             }
@@ -159,7 +163,7 @@ Characters_Distribution_ extract_data_from_file(FILE *fp)
 
                 if ( prev_c == -1 ) continue;
 
-                Character_Data n_data = { 0 };
+                Character_Data n_data = { 0 };//creating the new entry
 
                 n_data.label = prev_c;
 
@@ -169,6 +173,10 @@ Characters_Distribution_ extract_data_from_file(FILE *fp)
 
                 new_character.count++;
             }
+
+            dist_.characters[dist_.count] = new_character;//add the new character in the overall dist
+
+            dist_.count++;
         }
 
         add_character_to_previous(previous_, &ptr_previous, c);//add c in previous
@@ -197,17 +205,72 @@ char* initialise_first_letters_()
 }
 
 //pass through the distribution
+//for each letter get a score according to the previous letter array
 
-char* generate_random_text(Characters_Distribution_ *data)
+typedef struct
 {
+    int count;
+}
+Character_score;
+
+
+char* generate_random_text_(Characters_Distribution_ *data, int size)
+{
+    char * result_ = malloc(sizeof(char) * size);
+
     int reader_ptr = 0;
-    int pos_ptr = 0;
 
     char *previous_ = initialise_first_letters_();
+    int previous_ptr = 0;
 
+    Character_score *scores_ = malloc(sizeof(Character_score) * data->count);
 
+    for (int i = 0; i < data->count; i++)
+    {
+        Character_ *character = &data->characters[i];//selecter a character
+
+        Character_score score = { 0 };//score each character
+
+        scores_[i] = score;
+
+        for ( int l = 0; l < PREVIOUS_CHECKED; l++ )//pass through previous characters
+        {
+            for ( int j = 0; i < character->count; j++ )//pass through the distribution of previous character of the current character
+            {
+                Character_Data *data = &character->distribution_[j];
+
+                if ( data->label == previous_[l] ) score.count += data->count;
+            }
+        }
+    }
+
+    for ( int n = 0; n < size; n++)
+    {
+        //select the next letter based on the score obtained
+        int current_max = 0;
+
+        int win_index = 0;
+
+        for ( int k = 0; k < data->count; k++ )
+        {
+            if ( scores_[k].count > current_max ) current_max = scores_[k].count;
+
+            win_index = k;
+        }
+
+        char next_letter = data->characters[win_index].label;
+
+        result_[reader_ptr] = next_letter;
+
+        reader_ptr++;
+
+        add_character_to_previous(previous_, &previous_ptr, next_letter);
+    }
 
     free(previous_);
+    free(scores_);
+
+    return result_;
 }
 
 int main()
@@ -217,6 +280,14 @@ int main()
     fseek(fp, 0, SEEK_SET);
 
     Characters_Distribution_ data = extract_data_from_file(fp);
+
+    char *text_ = generate_random_text_(&data, 1000);
+
+    printf("\n%s\n",text_);
+
+    free(text_);
+
+    free_Characters_Distribution_(&data);
 
     return 0;
 }
