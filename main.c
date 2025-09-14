@@ -223,7 +223,7 @@ Text_Data initialise_text_data()
     return data;
 }
 
-Text_Data extract_data_from_file(FILE *fp, char end_char)
+Text_Data extract_data_from_file(FILE *fp)
 {
     Text_Data data = initialise_text_data();
 
@@ -231,7 +231,7 @@ Text_Data extract_data_from_file(FILE *fp, char end_char)
 
     while (1)
     {
-       char c = fgetc(fp);  if ( c == end_char ) break;
+       char c = fgetc(fp);  if ( c == EOF ) break;
 
         char current_c_type = set_alphabet_distribution_and_markov_transitions(c, &data.m, previous_c_type, &data.a);
 
@@ -416,7 +416,7 @@ int main()
 
     fseek(fp, 0, SEEK_SET);
     
-    Text_Data data = extract_data_from_file(fp,EOF);
+    Text_Data data = extract_data_from_file(fp);
 
     char *result = generate_random_text_(&data, 10000);
 
