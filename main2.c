@@ -90,6 +90,25 @@ void add_character_to_previous(char *previous, int *ptr, const char c)
     previous[*ptr] = c;
 }
 
+void print_distribution(Characters_Distribution_ *d)
+{
+    for ( int i = 0; i < d->count; i++ )
+    {
+        printf("the current character is %c \n", d->characters[i].label);
+
+        Character_ *c = &d->characters[i];
+
+        for(int l = 0; l < c->count; l++)
+        {
+            Character_Data *d = &c->distribution_[l];
+
+            printf("%c : %d - ", d->label, d->count);
+        } 
+
+        printf("\n");
+    }
+}
+
 //loop through dist
 //if label already there -> check dist ->> if label already there increment else create and increment
 //else create and get last for pre
@@ -110,11 +129,11 @@ Characters_Distribution_ extract_data_from_file(FILE *fp)
 
         for (int i = 0; i < dist_.count; i++)//pass through the existing entry of the distribution
         {
-            if ( dist_.characters[i].label == c )//if the charater already exist in the distribution
+            Character_ *character = &dist_.characters[i];//select the existing character
+
+            if ( character->label == c )//if the charater already exist in the distribution
             {
                 label_found_in_characters_distribution = 1;//set bool to one
-
-                Character_ *character = &dist_.characters[i];//select the existing character
 
                 for (int l = 0; l < PREVIOUS_CHECKED; l++)//pass in review the previous characters
                 {
@@ -124,11 +143,11 @@ Characters_Distribution_ extract_data_from_file(FILE *fp)
 
                     for ( int j = 0; j < character->count; j++)//pass through the existing entry of character
                     {
-                        if ( character->distribution_[j].label == c_in_review )//if the entry already exist for the character
+                        Character_Data *data = &character->distribution_[j];//select the existing entry
+
+                        if ( data->label == c_in_review )//if the entry already exist for the character
                         {
                             label_found_in_character_distribution = 1;//set bool to one
-
-                            Character_Data *data = &character->distribution_[j];//select the existing entry
 
                             data->count++;//incrementing count of an existing entry
                         }
@@ -161,7 +180,7 @@ Characters_Distribution_ extract_data_from_file(FILE *fp)
 
             new_character.label = c;
 
-            for ( int k = 0; k < PREVIOUS_CHECKED; k++)//passing in review the previous character
+            for ( int k = 0; k < PREVIOUS_CHECKED; k++)//passing in review the previous characters
             {
                 char prev_c = previous_[k];
 
@@ -243,7 +262,11 @@ char* generate_random_text_(Characters_Distribution_ *data, int size)
                 {
                     Character_Data *data = &character->distribution_[j];
 
-                    if ( data->label == previous_[l] ) score.count += data->count;
+                    if ( data->label == previous_[l] )
+                    {
+                        //printf("\nokkkkkkkkkk with %c\n", character->label);
+                        score.count += data->count;
+                    } 
                 }
             }
 
@@ -289,6 +312,8 @@ int main()
     fseek(fp, 0, SEEK_SET);
 
     Characters_Distribution_ data = extract_data_from_file(fp);
+
+    print_distribution(&data);
 
     char *text_ = generate_random_text_(&data, 1000);
 
