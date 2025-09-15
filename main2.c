@@ -6,7 +6,7 @@
 
 #define NB_CHARACTERS 100
 
-#define PREVIOUS_CHECKED 5
+#define PREVIOUS_CHECKED 50
 
 //******************************************************************************************/
 
@@ -252,12 +252,53 @@ char* initialise_first_letters_()
 //pass through the distribution
 //for each letter get a score according to the previous letter array
 
-typedef struct
+double generate_random_number()
 {
-    int count;
-}
-Character_score;
+    double result = (double) rand() / RAND_MAX;
 
+    return result;
+}
+
+int get_total_dist(const int *distribution, int nb_variables, int begin_index_of_dist)
+{
+    int total = 0;
+
+    for ( int i = begin_index_of_dist; i < begin_index_of_dist + nb_variables; i++ )
+    {
+        total += distribution[i];
+    }
+
+    return total;
+}
+
+int get_random_variable_from_distributon(const int *distribution, int nb_variables, int begin_index_of_dist)
+{
+    double random = generate_random_number();
+
+    double cumul_proba = 0.0f;
+
+    int total_dist = get_total_dist(distribution, nb_variables,begin_index_of_dist);
+
+    for (int i = begin_index_of_dist; i < begin_index_of_dist + nb_variables; i++)
+    {
+        double normalised = (double) distribution[i] / total_dist;
+
+        cumul_proba += normalised;
+
+        if ( cumul_proba >= random ) return i;
+    }
+
+    return -1;//possible bug if random close to 1; maybe set the last value as default return
+}
+
+int* get_character_distribution_in_contiguous_space_(int size)
+{
+    int *memory = malloc(sizeof(int) * size);
+
+
+
+    return memory;
+}
 
 char* generate_random_text_(Characters_Distribution_ *data, int size)
 {
@@ -269,15 +310,16 @@ char* generate_random_text_(Characters_Distribution_ *data, int size)
 
     int previous_ptr = 0;
 
-    Character_score *scores_ = malloc(sizeof(Character_score) * data->count);
+    int *scores_ = malloc(sizeof(int) * data->count);
 
+    //get the scoring
     for ( int n = 0; n < size; n++)
     {
         for (int i = 0; i < data->count; i++)//pass through all the caracter of the distribution
         {
             Character_ *character = &data->characters[i];//select a character
 
-            Character_score score = { 0 };//score each character
+            int score = 0 ;//score each character
 
             for ( int l = 0; l < PREVIOUS_CHECKED; l++ )//pass through previous characters
             {
@@ -287,8 +329,7 @@ char* generate_random_text_(Characters_Distribution_ *data, int size)
 
                     if ( data->label == previous_[l] )
                     {
-                        //printf("\nokkkkkkkkkk with %c\n", character->label);
-                        score.count += data->count;
+                        score += data->count;
                     } 
                 }
             }
@@ -297,19 +338,7 @@ char* generate_random_text_(Characters_Distribution_ *data, int size)
         }
 
         //select the next letter based on the score obtained
-        int current_max = 0;
-
-        int win_index = 0;
-
-        for ( int k = 0; k < data->count; k++ )
-        {
-            if ( scores_[k].count > current_max )
-            {
-                current_max = scores_[k].count;
-
-                win_index = k;
-            } 
-        }
+       int win_index = get_random_variable_from_distributon(scores_, data->count, 0);
 
         char next_letter = data->characters[win_index].label;
 
@@ -330,21 +359,15 @@ char* generate_random_text_(Characters_Distribution_ *data, int size)
 
 int main()
 {
+    srand(time(NULL));
+
     FILE *fp = fopen("text.txt", "r"); if ( fp == NULL ) { printf("Failed to open file.\n"); return 1; }
 
     fseek(fp, 0, SEEK_SET);
 
     Characters_Distribution_ data = extract_data_from_file(fp);
 
-    print_distribution(&data);
-
-    printf("----------------------------------------------");
-
-    print_a_character_and_his_distribution(' ', &data);
-
-    printf("----------------------------------------------");
-
-    char *text_ = generate_random_text_(&data, 1000);
+    char *text_ = generate_random_text_(&data, 10000);
 
     printf("\n%s\n",text_);
 
