@@ -109,6 +109,28 @@ void print_distribution(Characters_Distribution_ *d)
     }
 }
 
+void print_a_character_and_his_distribution(const char c, Characters_Distribution_ *d)
+{
+    printf("\n");
+
+    for ( int i = 0; i < NB_CHARACTERS; i++ )
+    {
+        if ( c ==  d->characters[i].label)
+        {
+            Character_ *c = &d->characters[i];
+
+            for(int l = 0; l < c->count; l++)
+            {
+                Character_Data *d = &c->distribution_[l];
+
+                printf("%c : %d - ", d->label, d->count);
+            } 
+
+            printf("\n");
+        }
+    }
+}
+
 //loop through dist
 //if label already there -> check dist ->> if label already there increment else create and increment
 //else create and get last for pre
@@ -244,6 +266,7 @@ char* generate_random_text_(Characters_Distribution_ *data, int size)
     int reader_ptr = 0;
 
     char *previous_ = initialise_first_letters_();
+
     int previous_ptr = 0;
 
     Character_score *scores_ = malloc(sizeof(Character_score) * data->count);
@@ -314,6 +337,12 @@ int main()
     Characters_Distribution_ data = extract_data_from_file(fp);
 
     print_distribution(&data);
+
+    printf("----------------------------------------------");
+
+    print_a_character_and_his_distribution(' ', &data);
+
+    printf("----------------------------------------------");
 
     char *text_ = generate_random_text_(&data, 1000);
 
